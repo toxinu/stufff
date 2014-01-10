@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %}</title>
+    <style type="text/css">
+        {% include 'css.html' %}
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+        <ul class=flashes>
+        {% for message in messages %}
+            <li>{{ message }} <span class="small">(<a href="#" onclick="this.parentNode.parentNode.style.display = 'none'">close</a>)</span></li>
+        {% endfor %}
+        </ul>
+    {% endwith %}
+    {% block content %}{% endblock %}
+</body>
+</html>
