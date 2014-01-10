@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ box.name }}{% endblock %}
+{% block content %}
+    <h2>{{ box.name }}'s box</h2>
+    <form name="input" action="{{ url_for('add_thing') }}" method="post">
+        <input type="text" name="thing_name" placeholder="New thing. Press enter." autofocus>
+        <input type="hidden" name="box_id" value="{{ box.id }}">
+    </form>
+    <hr>
+    <form action="{{ url_for('go_box') }}" method="post">
+        <select name="box_id" onchange="this.form.submit()">
+        {% for _box in boxes %}
+            {% if _box.id == box.id %}
+                <option value="{{ _box.id }}" selected>{{ _box.name }}</option>
+            {% else %}
+                <option value="{{ _box.id }}">{{ _box.name }}</option>
+            {% endif %}
+        {% endfor %}
+        </select>
+        <noscript><input type="submit" value="Submit"></noscript>
+    </form>
+    <button onclick="this.nextElementSibling.style.display = 'block';this.nextElementSibling.nextElementSibling.style.display = 'block'">New box</button>
+    <form name="input" action="{{ url_for('add_box') }}" method="post" style="display: none">
+        <input type="text" name="box_name" placeholder="New box. Press enter.">
+    </form>
+    <button style="display: none" onclick="this.previousElementSibling.style.display = 'none'; this.style.display = 'none'">Close</button>
+    {% if deletable %}
+        <a class="warning small" href="{{ url_for('delete_box', box_id=box.id) }}">Delete this box</a>
+    {% endif %}
+    <ul>
+    {% for thing in box.things %}
+        {% if thing.done %}
+            <li id="thing-{{ thing.id }}" class="thing done">{{ thing.name }} <span class="small">(<a href="{{ url_for('undone_thing', thing_id=thing.id) }}">undone</a>|<a class="warning" href="{{ url_for('delete_thing', thing_id=thing.id) }}">delete</a>)</span></li>
+        {% else %}
+            <li id="thing-{{ thing.id }}" class="thing">{{ thing.name }} <span class="small">(<a href="{{ url_for('done_thing', thing_id=thing.id) }}">done</a>)</span></li>
+        {% endif %}
+    {% else %}
+        <em class="small">Nothing here...</em>
+    {% endfor %}
+    </ul>
+{% endblock %}
