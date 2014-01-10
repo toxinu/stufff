@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from sys import exit
 from datetime import datetime
 from flask import Flask
 from flask import flash
@@ -12,7 +13,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = 'some_secret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./stuff.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./stufff.db'
 db = SQLAlchemy(app)
 
 
@@ -52,10 +53,10 @@ class Thing(db.Model):
 
 def create_db():
     db.create_all()
-    box = Box('Stuff')
+    box = Box('Stufff')
     db.session.add(box)
-    thing_01 = Thing('Doing stuff', box)
-    thing_02 = Thing('Doing moar stuff', box)
+    thing_01 = Thing('Doing stufff', box)
+    thing_02 = Thing('Doing moar stufff', box)
     db.session.add(thing_01)
     db.session.add(thing_02)
     db.session.commit()
