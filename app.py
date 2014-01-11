@@ -117,7 +117,7 @@ def undone_thing(thing_id):
     return redirect(url_for('box_view', box_id=thing.box.id))
 
 
-@app.route("/<box_id>")
+@app.route("/<int:box_id>")
 def box_view(box_id):
     box = Box.query.filter_by(id=box_id).one()
     boxes = Box.query.all()
