@@ -74,6 +74,7 @@ def login_required(f):
             return f(*args, **kwargs)
         return decorated_function
 
+
 @app.route("/login", methods=['GET', 'POST'])
 def login_view():
     if request.method == 'GET':
@@ -167,7 +168,8 @@ def box_view(box_id):
     if not count:
         deletable = True
 
-    return render_template('box.html', box=box, boxes=boxes, deletable=deletable)
+    return render_template(
+        'box.html', box=box, boxes=boxes, deletable=deletable)
 
 
 @app.route("/", methods=['POST'])
@@ -212,7 +214,8 @@ if __name__ == "__main__":
         if Box.query.count() == 0:
             db.create_db()
     except Exception as err:
-        print('Error with your database. Maybe you need to create it like that:')
+        print(
+            'Error with your database. Maybe you need to create it like that:')
         print('>> from app import create_db')
         print('>> create_db()')
         print(err)
