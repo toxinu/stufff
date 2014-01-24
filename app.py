@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from sys import exit
+from os import urandom
+from functools import wraps
 from datetime import datetime
 from flask import Flask
 from flask import flash
 from flask import abort
 from flask import request
+from flask import session
 from flask import url_for
 from flask import redirect
 from flask import render_template
@@ -13,7 +16,9 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = 'some_secret'
+app.secret_key = urandom(24)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./stufff.db'
+app.config['PASSWORD'] = 'admin'
 db = SQLAlchemy(app)
 
 
@@ -62,13 +67,43 @@ def create_db():
     db.session.commit()
 
 
+def login_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not session.get('logged_in'):
+                return redirect(url_for('login_view', next=request.url))
+            return f(*args, **kwargs)
+        return decorated_function
+
+@app.route("/login", methods=['GET', 'POST'])
+def login_view():
+    if request.method == 'GET':
+        return render_template('login.html')
+    else:
+        password = request.form.get('password')
+        if password == app.config.get('PASSWORD'):
+            session['logged_in'] = True
+        else:
+            flash('Bad credentials')
+            session['logged_in'] = False
+    return redirect(url_for('home_view'))
+
+
+@app.route("/logout")
+def logout_view():
+    session['logged_in'] = False
+    return redirect(url_for('login_view'))
+
+
 @app.route("/")
+@login_required
 def home_view():
     box = Box.query.first()
     return redirect(url_for('box_view', box_id=box.id))
 
 
 @app.route("/thing/add", methods=['POST'])
+@login_required
 def add_thing():
     box_id = request.form.get('box_id')
     thing_name = request.form.get('thing_name')
@@ -84,6 +119,7 @@ def add_thing():
 
 
 @app.route("/thing/done/<thing_id>", methods=['GET'])
+@login_required
 def done_thing(thing_id):
     thing = Thing.query.filter_by(id=thing_id).one()
     if not thing:
@@ -95,6 +131,7 @@ def done_thing(thing_id):
 
 
 @app.route("/thing/delete/<thing_id>", methods=['GET'])
+@login_required
 def delete_thing(thing_id):
     thing = Thing.query.filter_by(id=thing_id).one()
     if not thing:
@@ -107,6 +144,7 @@ def delete_thing(thing_id):
 
 
 @app.route("/thing/undone/<thing_id>", methods=['GET'])
+@login_required
 def undone_thing(thing_id):
     thing = Thing.query.filter_by(id=thing_id).one()
     if not thing:
@@ -118,12 +156,13 @@ def undone_thing(thing_id):
 
 
 @app.route("/<int:box_id>")
+@login_required
 def box_view(box_id):
     box = Box.query.filter_by(id=box_id).one()
-    boxes = Box.query.all()
     if not box:
         abort(404)
 
+    boxes = Box.query.all()
     count = box.things.filter_by(done=False).count()
     deletable = False
     if not count:
@@ -133,6 +172,7 @@ def box_view(box_id):
 
 
 @app.route("/", methods=['POST'])
+@login_required
 def go_box():
     box_id = request.form.get('box_id')
 
@@ -142,6 +182,7 @@ def go_box():
 
 
 @app.route("/box/add", methods=['POST'])
+@login_required
 def add_box():
     box_name = request.form.get('box_name')
 
@@ -153,6 +194,7 @@ def add_box():
 
 
 @app.route("/box/delete/<box_id>", methods=['GET'])
+@login_required
 def delete_box(box_id):
     box = Box.query.filter_by(id=box_id).one()
     if not box:
