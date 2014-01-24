@@ -15,7 +15,6 @@ from flask import render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = 'some_secret'
 app.secret_key = urandom(24)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./stufff.db'
 app.config['PASSWORD'] = 'admin'
