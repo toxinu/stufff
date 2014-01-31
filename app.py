@@ -10,7 +10,9 @@ from flask import abort
 from flask import request
 from flask import session
 from flask import url_for
+from flask import jsonify
 from flask import redirect
+from flask import make_response
 from flask import render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 
@@ -78,28 +80,22 @@ def login_required(f):
 @app.route("/login", methods=['GET', 'POST'])
 def login_view():
     if request.method == 'GET':
-        return render_template('login.html')
+        return make_response(render_template('login.html'), 401)
     else:
         password = request.form.get('password')
         if password == app.config.get('PASSWORD'):
             session['logged_in'] = True
+            return redirect(url_for('home_view'))
         else:
             flash('Bad credentials')
             session['logged_in'] = False
-    return redirect(url_for('home_view'))
+            return make_response(render_template('login.html'), 401)
 
 
 @app.route("/logout")
 def logout_view():
     session['logged_in'] = False
     return redirect(url_for('login_view'))
-
-
-@app.route("/")
-@login_required
-def home_view():
-    box = Box.query.first()
-    return redirect(url_for('box_view', box_id=box.id))
 
 
 @app.route("/thing/add", methods=['POST'])
@@ -194,7 +190,33 @@ def add_box():
     return redirect(url_for('box_view', box_id=box.id))
 
 
-@app.route("/box/delete/<box_id>", methods=['GET'])
+@app.route("/box/list.json", methods=['GET'])
+@login_required
+def list_box_json():
+    boxes = []
+    for box in Box.query.all():
+        boxes.append({'id': box.id, 'name': box.name})
+    return jsonify(boxes=boxes)
+
+
+@app.route("/box/<int:box_id>.json")
+def detail_box_json(box_id):
+    box = Box.query.filter_by(id=box_id).one()
+    if not box:
+        abort(404)
+
+    things = []
+    for thing in box.things:
+        things.append({
+            'id': thing.id,
+            'name': thing.name,
+            'done': thing.done,
+            'added_date': thing.added_date})
+
+    return jsonify(box_id=box.id, box_name=box.name, things=things)
+
+
+@app.route("/box/delete/<int:box_id>", methods=['GET'])
 @login_required
 def delete_box(box_id):
     box = Box.query.filter_by(id=box_id).one()
@@ -208,6 +230,14 @@ def delete_box(box_id):
     db.session.delete(box)
     db.session.commit()
     return redirect(url_for('home_view'))
+
+
+@app.route("/")
+@login_required
+def home_view():
+    box = Box.query.first()
+    return redirect(url_for('box_view', box_id=box.id))
+
 
 if __name__ == "__main__":
     try:
